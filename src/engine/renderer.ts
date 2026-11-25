@@ -10,7 +10,7 @@ const fragmentSource = `precision highp float;
 varying vec2 uv;
 uniform int field;
 uniform vec2 focus;
-uniform float aspect, local, detail, alpha, zoom;
+uniform float aspect, local, detail, alpha, zoom, ambient;
 ${cosmos}
 void main(){
  vec2 pos = focus+(uv-focus)/zoom;
@@ -58,7 +58,7 @@ export class CosmosRenderer {
       gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW)
       const pos = gl.getAttribLocation(program,'position')
       gl.enableVertexAttribArray(pos); gl.vertexAttribPointer(pos,2,gl.FLOAT,false,0,0)
-      for (const key of ['field','focus','aspect','local','detail','alpha','zoom']) this.uniforms[key] = gl.getUniformLocation(program,key)
+      for (const key of ['field','focus','aspect','local','detail','alpha','zoom','ambient']) this.uniforms[key] = gl.getUniformLocation(program,key)
       gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
       this.canvas.dataset.renderer = 'webgl'
       this.canvas.hidden = false
@@ -87,15 +87,16 @@ export class CosmosRenderer {
   private pass(index:number, local:number, alpha:number, zoom:number) {
     const gl = this.gl!, u = this.uniforms
     gl.uniform1i(u.field,this.ids[index])
-    gl.uniform2f(u.focus,this.portrait ? .56 : .694,this.portrait ? .745 : .532)
+    gl.uniform2f(u.focus,this.portrait ? .53 : .59,this.portrait ? .58 : .54)
     gl.uniform1f(u.local,local); gl.uniform1f(u.alpha,alpha); gl.uniform1f(u.zoom,zoom)
     gl.drawArrays(gl.TRIANGLES,0,3)
   }
-  render(frame:Frame, reduced:boolean) {
+  render(frame:Frame, reduced:boolean, seconds:number) {
     const gl=this.gl
     this.draws=0
     if (!gl || !this.program || gl.isContextLost()) return
     const {index, local, mix} = frame
+    gl.uniform1f(this.uniforms.ambient, reduced ? 0 : seconds)
     gl.disable(gl.BLEND)
     this.pass(index, reduced ? .55 : local,1,reduced ? 1 : 1+.14*mix)
     this.draws=1

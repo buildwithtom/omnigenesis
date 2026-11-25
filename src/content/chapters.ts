@@ -19,7 +19,7 @@ const second = 1 / (365.25 * 24 * 60 * 60)
 export const chapters: Chapter[] = [
   {
     id: 'unknown', title: 'The Unknown', time: 'Time undefined',
-    age: 0, weight: 1,
+    age: 0, weight: 0.32,
     narrative: 'At the edge of everything we know, our story begins.',
     description: 'Our best measurements trace the universe back to a hot, dense past. How far the idea of time itself reaches back is still an open question.',
     uncertainty: 'The point marks the limit of our knowledge. Expansion happened throughout space, with no central point of origin.',
@@ -54,7 +54,7 @@ export const chapters: Chapter[] = [
     age: 380000, weight: 1.15,
     narrative: 'Light is finally free to travel.',
     description: 'Electrons settled into atoms. Photons that had scattered again and again could now cross space freely. We receive that ancient light today as the cosmic microwave background.',
-    uncertainty: 'This is the oldest light we can observe directly. The colours here illustrate tiny temperature differences using a generated pattern.',
+    uncertainty: 'This is the oldest light we can observe directly. The thinning haze and paths of light are an artistic view of last scattering. The mottled background suggests tiny temperature differences in that ancient light.',
     evidenceType: 'Measured radiation', sources: ['background', 'expansion'],
   },
   {

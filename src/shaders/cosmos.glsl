@@ -1,4 +1,4 @@
-// All positions, light and material fields are functions of chapter position.
+// Historical state follows chapter position. Ambient phase moves gas and rotates materials.
 // Coordinates within the artwork use viewport height as one unit.
 const vec3 csBlack = vec3(.019, .020, .024);
 const vec3 csAmber = vec3(.97, .57, .225);
@@ -41,7 +41,9 @@ float csCloud(vec2 p, float detail) {
 
 // Each grid cell can contain one source. Its light fits inside the cell.
 vec3 csStars(vec2 p, float scale, float threshold, float seed) {
-    vec2 grid = p*scale + seed;
+    // Two depth layers drift at different angular speeds.
+    vec2 drift = vec2(sin(ambient*.065 + seed)-sin(seed), sin(ambient*.045))*.015;
+    vec2 grid = (p + drift)*scale + seed;
     vec2 id = floor(grid);
     float lum = csHash(id + 91.5);
     if (lum < threshold) return vec3(0);
@@ -67,7 +69,7 @@ vec3 csIgnition(vec2 p, float strength, float size) {
 vec3 csInflation(vec2 p, float t, float q) {
     // The coordinate lattice stretches uniformly throughout the field.
     vec2 s = csRotate(-.24)*p * exp(-1.65*t);
-    float warp = csCloud(s*2.2 + vec2(.38*t, 4.1), q);
+    float warp = csCloud(s*2.2 + vec2(.38*t+.11*sin(ambient*.18), 4.1+.08*sin(ambient*.12)), q);
     float striation = csCloud(vec2(s.x*2., s.y*15. + 4.*warp), q);
     float sheet = s.y + .63*(warp-.53) + .058*(striation-.5);
     float filament = .036 / (.037 + abs(sheet));
@@ -81,7 +83,7 @@ vec3 csInflation(vec2 p, float t, float q) {
 }
 
 vec3 csPlasma(vec2 p, float t, float q) {
-    vec2 v = csRotate(.42)*p * (3.7-.6*t) + vec2(.18*t, 23.);
+    vec2 v = csRotate(.42)*p * (3.7-.6*t) + vec2(.18*t+.14*sin(ambient*.21), 23.+.11*sin(ambient*.15));
     vec2 flow = vec2(csCloud(v+.28*t,q), csCloud(v-vec2(14.,.25*t),q));
     float heat = csCloud(v*1.4 + 2.7*flow,q);
     float eddy = csCloud(v*3. + 5.2*flow - t*.22,q);
@@ -98,13 +100,13 @@ vec3 csNuclei(vec2 p, float t, float q) {
     vec3 col = csBlack + vec3(.125,.057,.031)*fog*fog;
     for (int layer=0; layer<2; layer++) {
         float z = float(layer);
-        vec2 g = a*(3.5+z*10.) + vec2(1.3,3.) + z*.6;
+        vec2 g = a*(3.5+z*10.) + vec2(1.3,3.) + z*.6 + .07*vec2(sin(ambient*.18+z),sin(ambient*.13));
         vec2 id = floor(g);
         vec2 center = .28+.44*vec2(csHash(id+vec2(27.,0.)), csHash(id+13.));
         vec2 d = fract(g)-center;
         float seed = csHash(id+29.);
         if (seed>.24+.28*z) {
-            vec2 axis = vec2(cos(seed*28.),sin(seed*28.));
+            vec2 axis = vec2(cos(seed*28.+ambient*.13),sin(seed*28.+ambient*.13));
             float gap = (.112-.058*t)*(1.-.48*z);
             float r1 = length(d - axis*gap);
             float r2 = length(d + axis*gap);
@@ -121,20 +123,47 @@ vec3 csNuclei(vec2 p, float t, float q) {
     return col;
 }
 
+// A section through the last-scattering medium. Thin, nearly edge-on folds
+// carry more light along the line of sight. The field has no point source.
+vec3 csScatteringVeil(vec2 s, float layer, float clear, float q) {
+    float phase = layer*1.37 + .13*sin(ambient*.13 + layer);
+    float sweep = .12*sin(s.x*2.35 + phase) + .042*sin(s.x*5.1 - phase);
+    float folds = csCloud(vec2(s.x*1.7 + phase, s.y*2.2 + phase*3.),q);
+    float height = s.y - sweep - (layer-.9)*(.026+.092*clear) - .092*(folds-.5);
+    float width = .068 + .033*sin(2.1*s.x+phase) + .024*(1.-clear);
+    float depth = height / width;
+    float texture = csCloud(vec2(s.x*4.2 + phase, depth*1.8 + folds*2.),q);
+    float body = exp(-depth*depth*1.45);
+    float lip = exp(-abs(depth)*5.8);
+    float filament = .5+.5*cos(depth*27.+6.*texture+1.3*sin(s.x*5.+phase));
+    float gathering = .25+.75*exp(-2.72*(s.x-.09+.13*layer)*(s.x-.09+.13*layer));
+    vec3 silk = mix(vec3(.20,.22,.27),vec3(.57,.36,.19),texture);
+    return gathering * (silk*body*(.38+.53*texture)
+         + vec3(.82,.63,.39)*lip*(.36+.70*texture)
+         + vec3(.41,.36,.29)*body*filament*filament*.13);
+}
+
 vec3 csLastScattering(vec2 p, float t, float q) {
-    vec2 s = p*(3.0+.55*t) + vec2(3.1,7.4);
-    vec2 drift = vec2(csNoise(s*.79), csNoise(s*.82+13.));
-    float n = csCloud(s+drift*2.2,q) + .23*(csCloud(s*6.4+drift,q)-.5);
-    // A false-colour interpretation of a fluctuation field, not survey data.
-    vec3 col = mix(vec3(.078,.16,.22), vec3(.24,.39,.42), smoothstep(.24,.47,n));
-    col = mix(col, vec3(.61,.48,.32), smoothstep(.43,.58,n));
-    col = mix(col, vec3(.75,.32,.17), smoothstep(.55,.74,n));
-    float haze = (1.-t)*.22;
-    return col*(.70+.19*csNoise(s*43.)) + csIvory*haze*.26;
+    float clear = smoothstep(.02,.95,t);
+    vec2 s = csRotate(.28)*p;
+    s.x += .14*t;
+    s.y += .023*sin(ambient*.14);
+    float patch = csCloud(p*3.2+vec2(13.,9.),q);
+    float mist = csCloud(vec2(s.x*2.2,s.y*6.8)+patch*1.7,q);
+    vec3 col = mix(vec3(.023,.031,.045),vec3(.095,.082,.073),patch);
+    // Diffuse light gives way to paths that cross the cleared material.
+    col += vec3(.40,.27,.18)*(.34+mist)*exp(-abs(s.y)*3.5)*(1.-clear);
+    for(int i=0;i<3;i++) col += csScatteringVeil(s,float(i),clear,q)*(.7-.29*clear);
+    vec2 ray = csRotate(-.10)*s;
+    float lanes = csNoise(vec2(ray.y*62.+.20*sin(ambient*.16), 8.));
+    float shafts = pow(lanes,5.)*exp(-abs(ray.y+.015)*7.)*exp(-abs(ray.x-.23)*1.4);
+    col += vec3(.62,.52,.34)*shafts*clear;
+    return 1.-exp(-1.17*col);
 }
 
 float csGas(vec2 p, float t, float q) {
     vec2 s = csRotate(-.46)*p;
+    s += vec2(.065*sin(ambient*.16),.045*sin(ambient*.13 + p.x*2.));
     float coarse = csCloud(s*3.2+vec2(6.,.04*t),q);
     float fine = csCloud(vec2(s.x*6.,s.y*11.)+vec2(3.*coarse,4.),q);
     float axis = s.y + .56*(coarse-.49);
@@ -153,7 +182,7 @@ vec3 csDawn(vec2 p, float t, float q) {
     float r = length(s);
     vec3 col = csBlack + vec3(.23,.17,.14)*gas;
     col += vec3(.62,.37,.18)*gas*light*exp(-r*4.6);
-    col += csIgnition(s, .09+.96*light, .83+.68*t);
+    col += csIgnition(s, (.09+.96*light)*(1.+.09*sin(ambient*.48)), .83+.68*t);
     if (t>.30) col += csStars(s,47.,.92,3.)*smoothstep(.30,.94,t);
     if (q>.5) col += csStars(s,96.,.95,7.)*.48*light;
     return col;
@@ -164,6 +193,7 @@ vec3 csDawn(vec2 p, float t, float q) {
 vec3 csGalaxy(vec2 p, float seed, float spiral, float q) {
     float r = length(p);
     if (r>1.8) return vec3(0);
+    p = csRotate(.034*ambient)*p;
     float a = atan(p.y,p.x+.00001);
     float n = csCloud(p*5.2+seed,q);
     float knots = csCloud(p*14.+seed+2.6*n,q);
@@ -216,7 +246,7 @@ vec2 csWebDistances(vec2 p) {
 
 vec3 csStructure(vec2 p, float t, float q) {
     float zoom = 2.7+4.8*sin(t*2.31);
-    vec2 s = csRotate(.1)*p*zoom+vec2(.39,4.02);
+    vec2 s = csRotate(.1)*p*zoom+vec2(.39+.08*sin(ambient*.12),4.02+.06*sin(ambient*.1));
     vec2 warp = vec2(csCloud(s*.63,q),csCloud(s*.71+9.,q))-.5;
     vec2 dist = csWebDistances(s+warp*1.8);
     float edge = dist.y-dist.x;
@@ -247,7 +277,7 @@ vec3 csDisk(vec2 p, float t, float q) {
     float a = atan(plane.y,plane.x+.00001);
     // Passing disk coordinates through a rotation makes material orbit
     // smoothly, including at the angular seam.
-    vec2 flow = csRotate(.37*t - 2.9*r)*plane;
+    vec2 flow = csRotate(.37*t + ambient*.07/(1.+r) - 2.9*r)*plane;
     float broad = csCloud(flow*5.4+4.,q);
     float grit = csCloud(flow*vec2(48.,52.)+2.*broad,q);
     float band = .5+.5*cos(104.*r + 2.3*broad + 1.7*sin(2.*a-6.*r));
@@ -288,7 +318,7 @@ vec3 csEarth(vec2 p, float t, float q) {
     }
     vec3 normal = vec3(disk,sqrt(max(0.,1.-d*d)));
     vec3 surface = normal;
-    surface.xz = csRotate(.85 + t*.60)*surface.xz;
+    surface.xz = csRotate(.85 + t*.60 + ambient*.065)*surface.xz;
     float plates = csRock(surface,3.8);
     vec3 wrinkle = normalize(surface + vec3(.11*plates,.10*csRock(surface,7.),.13*plates));
     float cracks = csRock(wrinkle,9.5);

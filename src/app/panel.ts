@@ -72,7 +72,7 @@ export class Instrument {
   private draw(page:View, focus=false){
     this.page=page
     const a=this.actions, index=a.index(), c=chapters[index]
-    const nav=(['Chapters','Settings','References','About'] as const).map(v=>`<button data-view="${v}" ${this.page===v?'aria-current="page"':''}>${v}</button>`).join('')
+    const nav=(['Chapters','Evidence','Settings','References','About'] as const).map(v=>`<button data-view="${v}" ${this.page===v?'aria-current="page"':''}>${v}</button>`).join('')
     let body='', heading:string=page
     switch(page){
       case 'Chapters':
@@ -101,7 +101,7 @@ export class Instrument {
         break
       case 'About':
         heading='About OmniGenesis'
-        body='<div class="prose"><p><em>Scroll through the history of existence.</em></p><p>Act I follows the universe from the limits of our knowledge to the formation of Earth. Scroll either way to travel in time, or choose an epoch from the chapter index.</p><h3>Reading the instrument</h3><p>The engraved point is symbolic. Each later scene is a procedural artistic interpretation. The ruler follows a non-linear chronology, giving even the earliest fractions of a second room to unfold.</p><p>Use the left and right arrow keys to move between chapters. Page Up, Page Down, Home and End also work.</p><button class="panel-action" data-view="Reading">Open reading mode</button></div>'
+        body='<div class="prose"><p><em>Scroll through the history of existence.</em></p><p>Act I follows the universe from the limits of our knowledge to the formation of Earth. Scroll either way to travel in time, or choose an epoch from the chapter index.</p><h3>Reading the instrument</h3><p>The opening point is symbolic. Each later scene is a procedural artistic interpretation. The journey follows a non-linear chronology, giving even the earliest fractions of a second room to unfold.</p><p>Use the left and right arrow keys to move between chapters. Page Up, Page Down, Home and End also work.</p><button class="panel-action" data-view="Reading">Open reading mode</button></div>'
     }
     this.content.innerHTML=`<h2 id="panel-title" tabindex="-1">${heading}</h2><div class="tab-row" role="group" aria-label="Index views">${nav}</div>${body}`
     this.dialog.scrollTop=0

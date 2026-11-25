@@ -1,7 +1,7 @@
 export const clamp = (x: number) => Math.max(0, Math.min(1, x))
 export const ease = (x: number) => { const u = clamp(x); return u * u * (3 - 2 * u) }
 export interface Frame { index: number; local: number; mix: number }
-export function makeTimeline(entries: readonly {weight: number}[]) {
+export function makeTimeline(entries: readonly {weight: number; id?: string}[]) {
   if (!entries.length || entries.some(e => !Number.isFinite(e.weight) || e.weight <= 0)) {
     throw new Error('Every timeline chapter needs a positive finite weight.')
   }
@@ -18,13 +18,23 @@ export function makeTimeline(entries: readonly {weight: number}[]) {
     while (index > 0 && starts[index] > p) index--
     frame.index = index
     frame.local = clamp((p - starts[index]) / (ends[index] - starts[index]))
-    frame.mix = index + 1 < starts.length ? ease((frame.local - .78) / .22) : 0
+    const blendStart = entries[index].id === 'unknown' ? .025 : .72
+    frame.mix = index + 1 < starts.length ? ease((frame.local - blendStart) / (1 - blendStart)) : 0
     return frame
   }
   return { starts, ends, total, at, evaluate }
 }
 export function damp(current: number, target: number, dt: number) {
   const delta = target - current
-  if (Math.abs(delta) > .12 || Math.abs(delta) < .000025) return target
-  return current + delta * (1 - Math.exp(-14 * dt))
+  const gap = Math.abs(delta)
+  if (gap < .000025) return target
+  // Large flings pass through each scene at a bounded speed. Near the native
+  // scroll position, join an exponential tail with the same initial velocity.
+  const speed = .018
+  const rate = 6
+  const tail = speed / rate
+  const cruiseTime = Math.max(0, (gap - tail) / speed)
+  if (dt <= cruiseTime) return current + Math.sign(delta) * speed * dt
+  const remaining = Math.min(gap, tail) * Math.exp(-rate * (dt - cruiseTime))
+  return target - Math.sign(delta) * remaining
 }

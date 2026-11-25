@@ -28,8 +28,11 @@ describe('weighted timeline', () => {
     for(const p of [...path].reverse())timeline.evaluate(p,frame)
     path.forEach((p,i)=>expect(timeline.evaluate(p,frame)).toEqual(expected[i]))
   })
-  it('seeks directly across large jumps and damps small changes independent of refresh rate',()=>{
-    expect(damp(.1,.9,.01)).toBe(.9)
+  it('limits fling speed in both directions and eases to the native position',()=>{
+    expect(damp(.1,.9,.01)).toBeCloseTo(.10018,10)
+    expect(damp(.9,.1,.01)).toBeCloseTo(.89982,10)
+    expect(damp(.101,.1005,.1)).toBeGreaterThan(.1005)
+    expect(damp(damp(.1,.104,.06),.104,.06)).toBeCloseTo(damp(.1,.104,.12),12)
     expect(damp(damp(0,.1,.02),.1,.02)).toBeCloseTo(damp(0,.1,.04),12)
     expect(damp(.19999,.2,.016)).toBe(.2)
   })
