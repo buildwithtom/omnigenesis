@@ -138,7 +138,9 @@ export class Caption {
       this.container.style.opacity = String(this.opacity)
       this.lastOpacity = this.opacity
     }
-    this.scatter(reduced ? 0 : clamp(Math.max(edge, this.release)))
+    const dispersal = reduced ? 0 : clamp(Math.max(edge, this.release))
+    this.container.inert = this.opacity < .04 || dispersal > .8
+    this.scatter(dispersal)
     return !reduced && (this.opacity < 1 && this.release < 0 || this.release >= 0 && (this.release < 1 || edge < .01))
   }
 }

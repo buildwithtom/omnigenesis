@@ -4,6 +4,7 @@ export interface Chapter {
   time: string
   age: number
   weight: number
+  entry?: number
   narrative: string
   description: string
   uncertainty: string
@@ -90,8 +91,16 @@ export const chapters: Chapter[] = [
     evidenceType: 'Surveys and gravitational lensing', sources: ['web', 'structure', 'elements'],
   },
   {
+    id: 'milky-way', title: 'The Milky Way', time: 'Before the Sun',
+    age: 9e9, weight: 1.5, entry: .24,
+    narrative: 'Inside one spiral galaxy, a cloud gathers.',
+    description: 'A bar of stars runs through the heart of the Milky Way. Spiral arms curl around it. Today our Sun lies in a smaller branch, the Orion Spur, between two larger arms.',
+    uncertainty: 'Astronomers map the galaxy from inside its disk. This flight follows an imagined path to the cloud that formed the Sun. Its precise birthplace is uncertain.',
+    evidenceType: 'Mapping our galaxy', sources: ['milkyway', 'disk'],
+  },
+  {
     id: 'solar-system', title: 'The Birth of Our Solar System', time: '≈4.6 billion years ago',
-    age: 9.2e9, weight: 1.15,
+    age: 9.2e9, weight: 1.45, entry: .62,
     narrative: 'From the remnants of ancient stars, a new system emerges.',
     description: 'A cloud of gas and dust collapsed. The young Sun grew at its centre while solid grains in the surrounding disk came together, building larger bodies and eventually planets.',
     uncertainty: 'The scene compresses sizes, distances and orbital periods so the structure of the disk can be seen.',

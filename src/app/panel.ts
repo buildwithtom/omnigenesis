@@ -76,7 +76,7 @@ export class Instrument {
     let body='', heading:string=page
     switch(page){
       case 'Chapters':
-        heading='Chapter index'
+        heading='Contents'
         body=chapters.map((c,i)=>`<button class="chapter-link" data-jump="${i}" ${i===index?'aria-current="step"':''}><span>${pad(i)}</span>${c.title}</button>`).join('')+
           '<button class="panel-action" data-jump="0">Restart journey</button><button class="panel-action" data-view="Reading">Open reading mode</button>'
         break
@@ -85,23 +85,23 @@ export class Instrument {
         <div class="setting"><span>Reduced motion</span><button data-setting="motion" aria-pressed="${a.motion()}">${a.motion()?'On':'Off'}</button></div>
         <label class="setting" for="quality">Visual quality<select id="quality">${['Auto','High','Balanced','Low'].map(q=>`<option ${a.quality()===q?'selected':''}>${q}</option>`).join('')}</select></label>
         <button class="panel-action" data-view="Reading">Open reading mode</button>
-        <p class="prose">The optional electronic score is artistic accompaniment.</p>`
+        `
         break
       case 'Evidence':
         heading=c.title
-        body=`<div class="prose"><span class="micro">Chapter ${pad(index)} / ${c.time}</span><h3>${c.narrative}</h3><p>${c.description}</p><span class="micro">${c.evidenceType}</span><p>${c.uncertainty}</p><h3>Sources</h3><ul>${c.sources.map(reference).join('')}</ul></div>`
+        body=`<div class="prose"><span class="micro">Chapter ${pad(index)} / ${c.time}</span><p>${c.description}</p><span class="micro">${c.evidenceType}</span><p>${c.uncertainty}</p><h3>Sources</h3><ul>${c.sources.map(reference).join('')}</ul></div>`
         break
       case 'References':
         heading='Scientific references'
-        body=`<div class="prose"><p>Each chapter’s evidence notes connect its interpretation to the observations and models behind it.</p><ul>${Object.keys(sources).map(reference).join('')}</ul></div>`
+        body=`<div class="prose"><ul>${Object.keys(sources).map(reference).join('')}</ul></div>`
         break
       case 'Reading':
         heading='From the Unknown to Earth'
-        body=`<div class="prose"><p>Act I in eleven chapters. Time intervals are approximate and some epochs overlap.</p>${chapters.map((c,i)=>`<section class="reading-section"><span class="micro">Chapter ${pad(i)} / ${c.time}</span><h3>${c.title}</h3><p><em>${c.narrative}</em></p><p>${c.description}</p><p>${c.uncertainty}</p><button class="panel-action" data-jump="${i}">Visit this epoch</button></section>`).join('')}<p>This is where the next chapter begins.</p><h3>Act II — The Living Earth</h3><p>Forthcoming.</p></div>`
+        body=`<div class="prose"><p>Dates are approximate. Several epochs overlap.</p>${chapters.map((c,i)=>`<section class="reading-section"><span class="micro">Chapter ${pad(i)} / ${c.time}</span><h3>${c.title}</h3><p><em>${c.narrative}</em></p><p>${c.description}</p><p>${c.uncertainty}</p><button class="panel-action" data-jump="${i}">Visit this epoch</button></section>`).join('')}<p>This is where the next chapter begins.</p><h3>Act II — The Living Earth</h3><p>Forthcoming.</p></div>`
         break
       case 'About':
         heading='About OmniGenesis'
-        body='<div class="prose"><p><em>Scroll through the history of existence.</em></p><p>Act I follows the universe from the limits of our knowledge to the formation of Earth. Scroll either way to travel in time, or choose an epoch from the chapter index.</p><h3>Reading the instrument</h3><p>The opening point is symbolic. Each later scene is a procedural artistic interpretation. The journey follows a non-linear chronology, giving even the earliest fractions of a second room to unfold.</p><p>Use the left and right arrow keys to move between chapters. Page Up, Page Down, Home and End also work.</p><button class="panel-action" data-view="Reading">Open reading mode</button></div>'
+        body='<div class="prose"><p>Act I begins in darkness and ends on a young Earth. The images are interpretations, and the music is an original score.</p><p>Scroll either way. Select a line to read its evidence, or use the arrow keys to change chapters.</p><p>Time runs unevenly here. The first seconds take as much room as some of the next billion years.</p><button class="panel-action" data-view="Reading">Open reading mode</button></div>'
     }
     this.content.innerHTML=`<h2 id="panel-title" tabindex="-1">${heading}</h2><div class="tab-row" role="group" aria-label="Index views">${nav}</div>${body}`
     this.dialog.scrollTop=0

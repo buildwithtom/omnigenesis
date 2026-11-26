@@ -67,6 +67,12 @@ export const sources: Record<string, Source> = {
     url: 'https://science.nasa.gov/mission/hubble/science/science-behind-the-discoveries/hubble-stellar-explosions/',
     verified,
   },
+  milkyway: {
+    title: 'NASA / Spitzer · The Milky Way Galaxy',
+    url: 'https://science.nasa.gov/resource/the-milky-way-galaxy/',
+    published: '2017-11-08',
+    verified,
+  },
   disk: {
     title: 'NASA · Solar System Formation',
     url: 'https://science.nasa.gov/solar-system/solar-system-facts/',

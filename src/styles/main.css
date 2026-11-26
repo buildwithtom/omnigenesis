@@ -1,6 +1,8 @@
 @import '@fontsource/instrument-serif/latin-400.css';
 @import '@fontsource/instrument-serif/latin-400-italic.css';
 @import '@fontsource/ibm-plex-mono/latin-400.css';
+@import '@fontsource/radley/latin-400.css';
+@import '@fontsource/radley/latin-400-italic.css';
 
 :root {
   color-scheme:dark;
@@ -33,9 +35,9 @@ h1,h2,h3,p{margin:0}
 .mouse-wheel{position:absolute;left:calc(50% - 1px);top:6px;width:2px;height:6px;border-radius:2px;background:#e2d6bd;animation:scroll-wheel 3.2s ease-in-out infinite}
 #begin:hover .mouse-shell,#begin:focus-visible .mouse-shell{color:#f4e9d3}
 @keyframes scroll-wheel{
-  0%,14%{opacity:0;transform:translateY(0)}
+  0%,14%{opacity:.24;transform:translateY(0)}
   38%{opacity:1;transform:translateY(2px)}
-  75%,100%{opacity:0;transform:translateY(9px)}
+  75%,100%{opacity:.12;transform:translateY(9px)}
 }
 .instrument-trigger{position:absolute;z-index:2;right:max(var(--edge),env(safe-area-inset-right));top:max(3vh,env(safe-area-inset-top));display:grid;place-items:center;width:48px;height:48px}
 .diamond{display:grid;place-items:center;width:20px;height:20px;border:1px solid #a69e8a;transform:rotate(45deg);transition:transform .35s,border-color .3s}
@@ -81,3 +83,26 @@ dialog h2{font:400 clamp(42px,4.3vw,67px)/1.05 var(--serif);letter-spacing:-.02e
 .prose ul{padding-left:18px}.prose li{margin:10px 0}.source-date{display:block;color:#a39d90;font:10px/1.7 var(--mono)}
 .reading-section{border-top:1px solid #424137;margin:22px 0;padding:3px 0}
 #diagnostics{position:fixed;top:75px;left:var(--edge);background:#191b15;color:#c5cc9b;font:11px monospace;padding:7px;z-index:2}
+#caption-link{display:block;width:100%;padding:0;color:inherit;font:inherit;text-align:inherit;text-wrap:balance;text-shadow:inherit;pointer-events:auto}
+#caption-link:hover:not(:disabled),#caption-link:focus-visible{text-decoration:underline;text-decoration-color:#bdaa8280;text-decoration-thickness:1px;text-underline-offset:.17em}
+#caption-link:disabled{pointer-events:none}
+#sound{position:absolute;right:max(var(--edge),env(safe-area-inset-right));bottom:max(3vh,env(safe-area-inset-bottom));display:grid;place-items:center;width:48px;height:48px;color:#a89b85}
+.wave{display:flex;align-items:center;gap:2px;height:20px}
+.wave i{display:block;width:1.5px;height:var(--bar,4px);background:currentColor;border-radius:1px;transform:scaleY(.68)}
+.wave i:nth-child(2),.wave i:nth-child(6){--bar:9px;--delay:-1.2s}
+.wave i:nth-child(3),.wave i:nth-child(5){--bar:15px;--delay:-.5s}
+.wave i:nth-child(4){--bar:20px;--delay:-2.1s}
+#sound[aria-pressed=true]{color:#ead9b7}
+#sound[aria-pressed=true] .wave i{animation:playing 2.7s ease-in-out var(--delay,0s) infinite alternate}
+@keyframes playing{from{transform:scaleY(.46)}to{transform:scaleY(1)}}
+#stage[data-reduced=true] #sound .wave i{animation:none}
+#stage[data-reduced=true] #sound[aria-pressed=true] .wave i{transform:scaleY(1)}
+dialog{--book:'Radley',Cochin,'Iowan Old Style',Georgia,serif;--reading:Charter,'Bitstream Charter','Hoefler Text',Georgia,serif}
+dialog h2,.chapter-link,.prose h3{font-family:var(--book)}
+dialog h2{font-style:italic;font-size:clamp(40px,4vw,56px)}
+.tab-row button{font:16px/1.4 var(--book);text-transform:none;letter-spacing:0}
+.chapter-link{font-size:21px}
+.prose{font:18px/1.55 var(--reading)}
+.panel-action{font:italic 17px/1.4 var(--book)}
+
+#caption-link:not(:disabled)::after{content:'+';display:inline-block;margin-left:.3em;vertical-align:super;font:400 .31em/1 var(--mono);color:#cebc98}

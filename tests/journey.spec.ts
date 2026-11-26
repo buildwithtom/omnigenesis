@@ -1,5 +1,8 @@
 import { expect, test, type Page } from '@playwright/test'
 import { chapters } from '../src/content/chapters'
+const earth = chapters.length - 1
+const milkyWay = chapters.findIndex(c=>c.id==='milky-way')
+const solar = chapters.findIndex(c=>c.id==='solar-system')
 const scene = (p:Page,n:number)=>expect(p.locator('#stage')).toHaveAttribute('data-scene',chapters[n].id)
 const panel = (p:Page)=>p.getByRole('dialog')
 const openIndex=async(p:Page)=>{await p.getByRole('button',{name:'Index',exact:true}).click()}
@@ -17,7 +20,7 @@ test('the instrument visits each scene and opens its sources',async({page})=>{
   await expect(page.locator('.mouse-wheel')).toBeVisible()
   await page.getByRole('button',{name:'Begin the journey'}).click()
   await expect(page.getByRole('heading',{level:1})).toHaveText('Space itself expands.')
-  for(let i=1;i<11;i++)await go(page,i)
+  for(let i=1;i<chapters.length;i++)await go(page,i)
   await evidence(page)
   await expect(panel(page).getByText('Isotopic dating')).toBeVisible()
   await page.keyboard.press('Escape')
@@ -52,7 +55,7 @@ test('sound, reading mode and persistent quality preferences',async({page})=>{
   await panel(page).locator('[data-setting=motion]').click()
   await panel(page).getByLabel('Visual quality').selectOption('Low')
   await panel(page).getByRole('button',{name:'Open reading mode'}).click()
-  await expect(panel(page).locator('.reading-section')).toHaveCount(11)
+  await expect(panel(page).locator('.reading-section')).toHaveCount(chapters.length)
   await panel(page).getByRole('button',{name:'Visit this epoch'}).nth(7).click()
   await scene(page,7)
   await evidence(page)
@@ -85,7 +88,7 @@ test('text journey survives a missing shader module and unavailable WebGL',async
     } as typeof original
   })
   await page.reload();await expect(page.locator('#cosmos')).toHaveAttribute('data-renderer','fallback')
-  await go(page,10)
+  await go(page,earth)
 })
 test('context restoration reconstructs the active scene',async({page})=>{
   await page.goto('/');await expect(page.locator('#cosmos')).toHaveAttribute('data-renderer','webgl');await go(page,8)
@@ -106,18 +109,19 @@ test('capture the instrument and measure a traversal',async({page},info)=>{
   await page.setViewportSize({width:390,height:844})
   await page.screenshot({path:info.outputPath('opening-mobile.png')})
   await page.setViewportSize({width:1280,height:800})
-  await go(page,10);await expect(page.locator('.caption')).toHaveCSS('opacity','1')
+  await go(page,earth);await expect(page.locator('.caption')).toHaveCSS('opacity','1')
   await page.screenshot({path:info.outputPath('earth.png')})
-  await page.emulateMedia({reducedMotion:'reduce'})
+  await go(page,4)
   const sample=await page.evaluate(async()=>{
     const gl=document.querySelector('canvas')!.getContext('webgl')!
     const extension=gl.getExtension('WEBGL_debug_renderer_info')
     const renderer=extension ? gl.getParameter(extension.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER)
     const times:number[]=[]
     const height=document.documentElement.scrollHeight-innerHeight
+    const start=scrollY
     let previous=0
     for(let i=0;i<181;i++){
-      scrollTo(0,height*(.10+.89*i/180))
+      scrollTo(0,start+height*.04*i/180)
       const t=await new Promise<number>(r=>requestAnimationFrame(r))
       if(previous)times.push(t-previous)
       previous=t
@@ -145,9 +149,9 @@ test('touch swipes and layouts on a compact phone',async({browser,browserName})=
     }
     await swipe(500,-350);await expect.poll(()=>page.evaluate(()=>scrollY)).toBeGreaterThan(100)
     await swipe(180,330)
-    for(const i of [0,3,4,6,8,9,10]){
+    for(const i of [0,3,4,6,8,milkyWay,solar,earth]){
       await go(page,i)
-      if(i===10)await page.keyboard.press('End')
+      if(i===earth)await page.keyboard.press('End')
       const bounds=await page.evaluate(()=>{
         const box=document.querySelector('.caption')!.getBoundingClientRect()
         return {bottom:box.bottom,limit:innerHeight}
@@ -171,7 +175,7 @@ test('reduced motion reconstructs a still galaxy field after visiting Earth',asy
   const field={x:800,y:260,width:360,height:300}
   await go(page,7)
   const first=await page.screenshot({clip:field})
-  await go(page,10);await go(page,7)
+  await go(page,earth);await go(page,7)
   expect(await page.screenshot({clip:field})).toEqual(first)
 })
 
@@ -217,9 +221,72 @@ test('a fast fling leaves time to see the transparency scene and can be reversed
   await expect.poll(()=>page.evaluate(()=>scrollY)).toBeLessThan(start+1000)
   await scene(page,4)
   await page.keyboard.press('End')
-  await scene(page,10)
+  await scene(page,earth)
   await page.keyboard.press('Home')
   await expect(page.locator('#begin')).toBeVisible()
   await page.emulateMedia({reducedMotion:'reduce'})
   await expect(page.locator('.mouse-wheel')).toHaveCSS('animation-name','none')
+})
+
+test('captions open their own evidence and the waveform shares the menu setting', async({page},info)=>{
+  await page.goto('/')
+  await expect(page.getByRole('button',{name:'Soundtrack'})).toHaveAttribute('aria-pressed','false')
+  await page.getByRole('button',{name:'Soundtrack'}).click()
+  await openIndex(page)
+  await panel(page).getByRole('button',{name:'Settings'}).click()
+  const sound=panel(page).locator('[data-setting=sound]')
+  await expect(sound).toHaveAttribute('aria-pressed','true')
+  await sound.click()
+  await page.keyboard.press('Escape')
+  await expect(page.locator('#sound')).toHaveAttribute('aria-pressed','false')
+  for(const index of [1,milkyWay,solar]){
+    await go(page,index)
+    await expect(page.locator('.caption')).toHaveCSS('opacity','1')
+    if(index>=milkyWay)await page.screenshot({path:info.outputPath(chapters[index].id+'.png')})
+    await page.locator('#caption-link').click()
+    await expect(panel(page).getByRole('heading',{level:2})).toHaveText(chapters[index].title)
+    await expect(panel(page).getByText(chapters[index].description)).toBeVisible()
+    if(index===milkyWay)await page.screenshot({path:info.outputPath('milky-way-evidence.png')})
+    await page.keyboard.press('Escape')
+    await expect(page.locator('#caption-link')).toBeFocused()
+    await scene(page,index)
+  }
+})
+
+test('the score produces a low signal and fades when switched off',async({page})=>{
+  await page.addInitScript(()=>{
+    const connect=AudioNode.prototype.connect
+    AudioNode.prototype.connect=function(this:AudioNode,destination:AudioNode,...ports:unknown[]){
+      if(destination instanceof AudioDestinationNode){
+        const meter=this.context.createAnalyser()
+        meter.fftSize=2048
+        Reflect.apply(connect,this,[meter])
+        Object.assign(window,{scorePeak:()=>{
+          const data=new Float32Array(meter.fftSize)
+          meter.getFloatTimeDomainData(data)
+          return data.reduce((peak,v)=>Math.max(peak,Math.abs(v)),0)
+        }})
+      }
+      return Reflect.apply(connect,this,[destination,...ports])
+    } as typeof connect
+  })
+  await page.goto('/')
+  const waveform=page.getByRole('button',{name:'Soundtrack'})
+  await waveform.click()
+  const peak=()=>page.evaluate(()=>(window as Window & {scorePeak:()=>number}).scorePeak())
+  await expect.poll(peak).toBeGreaterThan(.002)
+  expect(await peak()).toBeLessThan(.08)
+  await waveform.click()
+  await expect.poll(peak).toBeLessThan(.0005)
+})
+
+test('scroll moves through the Milky Way arm into the solar system',async({page})=>{
+  await page.goto('/')
+  await go(page,milkyWay)
+  const total=chapters.reduce((sum,c)=>sum+c.weight,0)
+  const distance=await page.evaluate(()=>document.documentElement.scrollHeight-innerHeight)
+  await page.mouse.wheel(0,distance*chapters[milkyWay].weight/total)
+  await scene(page,milkyWay)
+  await expect(page.locator('#stage')).toHaveAttribute('data-scene','solar-system',{timeout:15000})
+  await expect(page.locator('#chapter-heading')).toContainText(chapters[solar].narrative)
 })

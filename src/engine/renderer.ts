@@ -4,7 +4,7 @@ import type { Frame } from './timeline'
 
 // Stable content IDs select authored shader fields independently of chapter order.
 const fieldIds = ['unknown', 'inflation', 'energy', 'nucleosynthesis', 'recombination',
-  'dark-ages', 'cosmic-dawn', 'galaxies', 'cosmic-web', 'solar-system', 'earth']
+  'dark-ages', 'cosmic-dawn', 'galaxies', 'cosmic-web', 'solar-system', 'earth', 'milky-way']
 const vertexSource = 'attribute vec2 position; varying vec2 uv; void main(){uv=position*.5+.5;gl_Position=vec4(position,0.,1.);}'
 const fragmentSource = `precision highp float;
 varying vec2 uv;

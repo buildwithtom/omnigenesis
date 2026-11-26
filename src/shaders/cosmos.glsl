@@ -270,6 +270,83 @@ vec3 csStructure(vec2 p, float t, float q) {
     return col;
 }
 
+// The final arm crossing and the first view of the solar nebula share this
+// focal cloud, so neither its position nor its light jumps at the boundary.
+vec3 csSolarCloud(vec2 p, float q) {
+    float gas = csGas(p*.83,.55,q);
+    float wisps = csCloud(p*vec2(5.1,8.3)+vec2(5.6,.11*sin(ambient*.12)),q);
+    vec3 col = csBlack + vec3(.37,.23,.16)*gas*(.50+.85*wisps);
+    col += csStars(p,81.,.64,35.)*(.26+.65*gas);
+    return col + csIgnition(p,.27,.47)*(.55+gas);
+}
+
+vec3 csMilkyWay(vec2 p, float t, float q) {
+    float flight = smoothstep(.26,.95,t);
+    float zoom = exp(3.85*flight);
+    vec2 g = csRotate(-.33)*p*vec2(1.7,2.35)/zoom;
+    // Aim off-centre and move inward until a patch of an arm fills the view.
+    g = csRotate(.12+.010*ambient)*g;
+    // Fix the destination in the rotating disk, on the crest of a major arm.
+    const float armAngle = .977;
+    g += .57*vec2(cos(armAngle),sin(armAngle))*flight;
+    float r = length(g);
+    float angle = atan(g.y,g.x+.00001);
+    float clouds = csCloud(g*5.8+2.1,q);
+    float phase = angle - 3.2*log(max(r,.115)/.42) + .39*(clouds-.5);
+    float envelope = exp(-1.85*r)*(1.-smoothstep(.92,1.46,r));
+    float ring = smoothstep(.09,.26,r);
+    float major = pow(.5+.5*cos(2.*phase),5.);
+    float branch = pow(.5+.5*cos(4.*phase+.85+.72*sin(3.*angle)),8.);
+    float arms = ring*(major+.32*branch);
+    float knots = csCloud(g*20.+3.1*clouds,q);
+    float split = pow(.5+.5*cos(2.*phase+.42),15.);
+    float clear = 1.-.68*split*ring*smoothstep(.33,.63,knots);
+    float bar = exp(-length(g*vec2(3.8,12.5))*1.8);
+    vec3 col = csBlack + csStars(p,61.,.83,44.)*.35;
+    col += vec3(.94,.69,.41)*(1.25*bar+.52*exp(-r*7.));
+    col += envelope*(vec3(.20,.17,.15)+arms*vec3(.83,.89,1.08))*(.28+1.20*knots)*clear;
+    col += vec3(.79,.38,.31)*arms*envelope*pow(smoothstep(.47,.75,knots),4.);
+    // Separate star scales form unresolved light, fine grains and bright members.
+    vec3 grains = csStars(g,157.,.14,16.) + .85*csStars(g,72.,.44,29.);
+    if(q>.5) grains += .72*csStars(g,277.,.17,58.);
+    col += grains*envelope*(.57+5.*arms)*(.43+1.16*knots);
+    float nearby = smoothstep(.46,.92,t);
+    col += nearby*csStars(p/exp(.60*flight),55.,.72,74.)*.85;
+    if(t>.70) col = mix(col,csSolarCloud(p,q),smoothstep(.70,.99,t));
+    return col;
+}
+
+// Young bodies in an inclined disk. Their sizes and separations are compressed.
+vec3 csYoungPlanets(vec3 col, vec2 p, float t) {
+    float formed = smoothstep(.24,.63,t);
+    if(formed<=0.) return col;
+    vec2 screen = csRotate(-.27)*p;
+    for(int i=0;i<6;i++) {
+        float k = float(i);
+        float orbit = .092+k*.093;
+        float angle = 1.17+k*2.43 + (.27*t+ambient*.026)/(orbit+.19);
+        vec2 centre = vec2(cos(angle),.34*sin(angle))*orbit;
+        float radius = (.006+.002*k+.011*exp(-abs(k-3.)*2.))*formed;
+        vec2 d = (screen-centre)/max(radius,.00001);
+        float dd = dot(d,d);
+        // Faint, incomplete tracks pick out the developing disk plane.
+        float track = abs(length(screen*vec2(1.,1./.34))-orbit);
+        col += vec3(.21,.18,.14)*exp(-track*650.)*formed*(.5+.5*cos(angle+screen.x*7.));
+        if(dd<1.) {
+            vec3 normal = vec3(d,sqrt(1.-dd));
+            vec3 sunlight = normalize(vec3(-centre,.05));
+            float lit = max(0.,dot(normal,sunlight));
+            float surface = csNoise(d*4.+k);
+            vec3 rock = mix(vec3(.47,.31,.22),vec3(.75,.63,.45),surface);
+            vec3 bands = vec3(.70,.58,.43)*(.87+.13*sin(d.y*17.+surface));
+            vec3 material = mix(rock,bands,smoothstep(2.,3.,k));
+            vec3 body = material*(.067+.93*lit) + .09*pow(1.-normal.z,2.)*csAmber;
+            col = mix(col,body,smoothstep(0.,.16,1.-dd)*formed);
+        }
+    }
+    return col;
+}
+
 vec3 csDisk(vec2 p, float t, float q) {
     vec2 s = csRotate(-.27)*p*(1.04-.14*t);
     vec2 plane = s*vec2(1.,3.45);
@@ -285,12 +362,14 @@ vec3 csDisk(vec2 p, float t, float q) {
     float gap = smoothstep(.038,.098,r);
     float dust = envelope*gap*(.36+.42*band+.56*grit)*(.50+.55*broad);
     vec3 col = csBlack + csStars(p,57.,.92,17.)*.38;
-    col += vec3(.92,.62,.35)*dust;
+    col += vec3(.92,.62,.35)*dust*(1.-.67*smoothstep(.24,.85,t));
     col += vec3(.50,.19,.07)*exp(-abs(s.y)*9.)*exp(-abs(s.x)*3.)*broad*.36;
     col += csIgnition(p,.68+.30*t,.92);
     if(t>.28) {
         col += csStars(flow,52.,.68,7.)*envelope*gap*.85*smoothstep(.28,.84,t);
     }
+    col = csYoungPlanets(col,p,t);
+    if(t<.33) col = mix(csSolarCloud(p,q),col,smoothstep(0.,.33,t));
     return col;
 }
 
@@ -351,6 +430,7 @@ vec3 cosmos(int scene, vec2 uv, vec2 focus, float aspect, float local, float det
     if(scene==6) return csDawn(p,t,detail);
     if(scene==7) return csGalaxies(p,t,detail);
     if(scene==8) return csStructure(p,t,detail);
+    if(scene==11) return csMilkyWay(p,t,detail);
     if(scene==9) return csDisk(p,t,detail);
     if(scene==10) return csEarth(p,t,detail);
     return csBlack;

@@ -12,7 +12,7 @@ describe('weighted timeline', () => {
   })
   it('clamps endpoints and keeps Earth at the end',()=>{
     expect(timeline.evaluate(-1)).toEqual({index:0,local:0,mix:0})
-    expect(timeline.evaluate(1.1)).toEqual({index:10,local:1,mix:0})
+    expect(timeline.evaluate(1.1)).toEqual({index:chapters.length-1,local:1,mix:0})
   })
   it('reconstructs both sides of every boundary',()=>{
     for(let i=0;i<chapters.length;i++){

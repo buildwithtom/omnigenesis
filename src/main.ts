@@ -13,10 +13,12 @@ const canvas = el<HTMLCanvasElement>('cosmos')
 const origin = el('origin')
 const begin = el<HTMLButtonElement>('begin')
 const conclusion = el('conclusion')
+const captionLink = el<HTMLButtonElement>('caption-link')
+const sound = el<HTMLButtonElement>('sound')
 const timeline = makeTimeline(chapters)
 const score = new Score()
 const quality = new QualityControl()
-const caption = new Caption(document.querySelector('.caption')!, el('chapter-heading'), el<HTMLCanvasElement>('letter-dust'))
+const caption = new Caption(document.querySelector('.caption')!, captionLink, el<HTMLCanvasElement>('letter-dust'))
 const motionPreference = matchMedia('(prefers-reduced-motion: reduce)')
 
 function readSetting(key: string) {
@@ -41,7 +43,7 @@ function rememberPosition() {
   history.replaceState({...history.state, omniProgress:clamp(scrollY / distance)}, '')
 }
 
-function jump(index: number, local = index === 0 ? 0 : .38, interpolate = false) {
+function jump(index: number, local = chapters[index].entry ?? (index === 0 ? 0 : .38), interpolate = false) {
   window.scrollTo({top: Math.round(timeline.at(index, local) * distance), behavior:'instant'})
   target = clamp(scrollY / distance)
   if (!interpolate || reduced) rendered = target
@@ -50,12 +52,15 @@ function jump(index: number, local = index === 0 ? 0 : .38, interpolate = false)
 }
 function next() {
   if (currentIndex >= chapters.length - 1) jump(currentIndex, 1, true)
-  else jump(currentIndex + 1, .38, true)
+  else jump(currentIndex + 1, undefined, true)
 }
 async function toggleSound() {
   if (failedAudio) return
   try { await score.toggle(); score.update(rendered) }
   catch { failedAudio = true }
+  sound.disabled = failedAudio
+  sound.setAttribute('aria-pressed', String(score.enabled))
+  sound.title = failedAudio ? 'Sound unavailable' : score.enabled ? 'Mute soundtrack' : 'Play soundtrack'
 }
 const instrument = new Instrument({
   index: () => Math.max(0, currentIndex), jump: i => jump(i),
@@ -67,6 +72,8 @@ const instrument = new Instrument({
 })
 el<HTMLDialogElement>('instrument').addEventListener('close', invalidate)
 begin.addEventListener('click', next)
+sound.addEventListener('click', () => { void toggleSound() })
+captionLink.addEventListener('click', () => instrument.open('Evidence', captionLink))
 window.addEventListener('keydown', e => {
   if (instrument.isOpen || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return
   switch (e.key) {
@@ -100,6 +107,9 @@ function updatePosition() {
     stage.classList.toggle('opening', index === 0)
     origin.hidden = index !== 0
     conclusion.hidden = !done
+    captionLink.disabled = done
+    if (!done) captionLink.setAttribute('aria-label', chapter.narrative + ' Read evidence.')
+    else captionLink.removeAttribute('aria-label')
     caption.setText(index === 0 ? '' : done ? 'Act II — The Living Earth' : chapter.narrative)
     el('announce').textContent = chapter.title + '. ' + chapter.time + '. ' + chapter.description
   }
