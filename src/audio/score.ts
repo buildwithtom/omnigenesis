@@ -28,10 +28,10 @@ export class Score {
   private phrase?: AudioBufferSourceNode
   private tones: OscillatorNode[] = []
   private last = -1
-  enabled = false
+  enabled = true
+  get playing() { return this.enabled && !!this.master && this.ctx?.state === 'running' }
 
-  private init(Audio: typeof AudioContext) {
-    const ctx = this.ctx = new Audio()
+  private init(ctx: AudioContext) {
     const master = this.master = ctx.createGain()
     master.gain.value = 0
     master.connect(ctx.destination)
@@ -54,16 +54,15 @@ export class Score {
     phrase.start()
   }
 
-  async toggle() {
+  async start() {
+    if (!this.enabled || document.hidden) return
     if (!this.ctx) {
       const Audio = window.AudioContext || (window as typeof window & {webkitAudioContext?: typeof AudioContext}).webkitAudioContext
       if (!Audio) throw Error('Web Audio unavailable')
-      this.init(Audio)
+      this.ctx = new Audio()
     }
-    if (this.ctx!.state === 'suspended') await this.ctx!.resume()
-    this.enabled = !this.enabled
-    this.last = -1
-    return this.enabled
+    if (this.ctx.state !== 'running') await this.ctx.resume()
+    if (!this.master && this.enabled && this.ctx.state === 'running') this.init(this.ctx)
   }
 
   update(progress: number) {

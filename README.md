@@ -11,7 +11,7 @@ npm ci
 npm run dev
 ```
 
-Open the local URL printed by Vite. Scroll, swipe, or use the arrow keys. Select a caption for evidence. The diamond opens the chapter index, reading mode and settings. The waveform in the lower corner switches the score on or off. Home and End seek to the limits of Act I. Select an epoch in the index to jump there, or open Evidence for its science notes.
+Open the local URL printed by Vite. Scroll, swipe, or use the arrow keys. Select a caption for evidence. The diamond opens the index. Select a section for its page, or use the bottom gear for settings. The waveform in the lower corner switches the score on or off. Home and End seek to the limits of Act I. Select an epoch in the index to jump there, or open Evidence for its science notes. “Replay this chapter” in the notes plays the scene from its beginning and rests before the next transition.
 
 ## Build and deploy
 
@@ -24,11 +24,11 @@ The production site is the contents of `dist/`. For Cloudflare Pages, select `np
 
 ## How the experience works
 
-- **Timeline.** Native document scroll determines one global progress value. Chapter weights assign each epoch a share of the scroll range. A pure evaluator returns the chapter, local progress and transition amount. Fast flings travel at a bounded visual speed and ease into the native position. A reversal cancels pending travel. Chapter links and Home/End seek directly. A history-entry position restores the journey across reloads.
+- **Timeline.** Native document scroll determines one global progress value. Chapter weights assign each epoch a share of the scroll range. A pure evaluator returns the chapter, local progress and transition amount. A single fling can reach the adjacent chapter. The image travels at a bounded speed and eases into the landing. A reversal cancels pending travel. Chapter links and Home/End seek directly. A history-entry position restores the journey across reloads.
 - **Rendering.** A single WebGL context draws an oversized triangle with deterministic procedural fragment shaders. Each scene ID selects a field. Scroll sets its historical state. A separate ambient clock drives cloud flow, stellar parallax, disk motion and Earth’s rotation. Neighbouring fields share a spatial transition over the end of an epoch. The renderer issues one draw for an isolated chapter or two during a transition. The opening is a single symbolic light.
 - **Performance.** The opening paints before the shader module loads. All chapter fields share one linked program. The engine animates the active field while the journey is visible. It rests on the opening, pauses behind the menu and sleeps in a hidden tab. Reduced motion uses still chapter poses. Auto quality uses sustained frame intervals and a longer recovery window to adjust the pixel budget, star sampling and noise detail. A lost context leaves navigation and text available while the renderer rebuilds its resources.
-- **Captions.** Each chapter settles into view before its sentence fades in. A new scroll gesture releases the lettering into a 1.75-second drift. A small 2D canvas samples its actual glyph positions and carries their grains along curved paths. Font loading and resizing invalidate the glyph map. Reduced motion presents the line immediately.
-- **Interface.** Scientific details, sound and chapter navigation live in the diamond menu. A native modal dialog handles focus containment. Reduced motion follows the system preference until overridden, and keeps a representative pose for each chapter. A text reading mode includes the entire narrative. Web Audio synthesises an optional user-activated score and fades its gain during navigation and tab changes.
+- **Captions.** Each chapter settles into view before its sentence fades in. A deliberate scroll releases the lettering into a 1.75-second drift. Small nudges leave the line readable. Once travel settles, the caption and its evidence link return, including during a blend. A small 2D canvas samples its actual glyph positions and carries their grains along curved paths. Font loading and resizing invalidate the glyph map. Reduced motion presents the line immediately.
+- **Interface.** Scientific details, sound and chapter navigation live in the diamond menu. A native modal dialog handles focus containment. Reduced motion follows the system preference until overridden, and keeps a representative pose for each chapter. After 45 seconds without input, autoplay advances the journey and holds each landing for 12 seconds. User input interrupts playback. Open menus, hidden tabs and reduced motion suspend autoplay. The quiet score defaults to on and starts when the browser permits audio. Sound, autoplay and visual preferences persist across visits.
 - **Extending the journey.** Add a chapter record with a unique ID, positive weight, evidence notes and references. Route its ID to a field in the renderer and add its GLSL evaluator. Scroll ranges and chapter navigation derive from the records. Additional acts can instantiate the same timeline and renderer with their own ordered chapter lists.
 
 ## Science and artwork
@@ -50,7 +50,7 @@ WEBKIT=1 npm run test:browser
 
 The browser suite defaults to installed Google Chrome. It can use another Chromium channel through `PLAYWRIGHT_CHANNEL`. The WebKit run uses Playwright’s installed WebKit build. Tests start Vite automatically or reuse the server on port 5173. Screenshots are written to the ignored `test-results/` directory.
 
-The tests cover weighted boundaries, reverse traversal, reconstruction of a reduced-motion scene, ambient movement at rest, delayed caption appearance, glyph dispersal, source integrity, native wheel scrolling, rapid touch swipes, keyboard seeking, reload restoration, viewport rotation, menu focus, sound controls, reading mode, user preferences, missing graphics code, context loss and restoration.
+The tests cover weighted boundaries, reverse traversal, reconstruction of a reduced-motion scene, ambient movement at rest, delayed caption appearance, glyph dispersal, source integrity, native wheel scrolling, rapid touch swipes, keyboard seeking, reload restoration, viewport rotation, menu focus, sound controls, idle playback, settings switches, the quality slider, user preferences, missing graphics code, context loss and restoration.
 
 **Visual checks.** Inspected the minimal opening, Cosmic Dawn, moving Earth and the dust leaving the letterforms. Compact-phone checks keep captions within the viewport. The WebKit run checks the interface and graphics on the desktop engine. Physical iPhone, Android, trackpad hardware and audible output still need device checks.
 
@@ -63,5 +63,5 @@ On a MacBook Air with Apple M1, 8 GB memory and macOS 26.6.2, a 180-frame sample
 | Headless Google Chrome, ANGLE Metal | 16.7 ms | 16.7 ms |
 | Playwright WebKit 26.0, Apple GPU | 17 ms | 18 ms |
 
-For a manual device check, begin with sound off, reverse direction during the first stellar ignition, then jump to Earth and back through the index. Rotate the device while the chapter is visible and check the caption against the timeline. Enable the score with a tap, background the tab and return. Use the reading view for the same chapter and open its evidence links.
+For a manual device check, reverse direction during the first stellar ignition, then jump to Earth and back through the index. Rotate the device while the chapter is visible and check the caption against the timeline. Toggle the score with the waveform, background the tab and return. Select the caption and open its evidence links.
 # omnigenesis

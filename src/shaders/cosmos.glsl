@@ -143,6 +143,23 @@ vec3 csScatteringVeil(vec2 s, float layer, float clear, float q) {
          + vec3(.41,.36,.29)*body*filament*filament*.13);
 }
 
+// Short, deflected paths in the haze lengthen into uninterrupted rays.
+float csPhotonTrail(vec2 s, float layer, float clear) {
+    float lane = (layer-1.)*.115;
+    float x = s.x + layer*.19;
+    float stepX = x*7. + layer*.73;
+    float bend = mix(csHash(vec2(floor(stepX),layer+12.)),
+                     csHash(vec2(floor(stepX)+1.,layer+12.)),smoothstep(0.,1.,fract(stepX)))-.5;
+    float y = lane + (.10-.035*layer)*s.x + bend*.14*(1.-clear);
+    float offset = abs(s.y-y);
+    float head = fract(ambient*.085 + layer*.32 + .12)*3.6-1.8;
+    float behind = head-x;
+    float trail = exp(-max(behind,0.)/(.075+.35*clear))*smoothstep(-.022,.012,behind);
+    float envelope = exp(-1.9*x*x);
+    float strand = exp(-offset*580.) + .18*exp(-offset*105.);
+    return strand*envelope*(.018+.92*trail);
+}
+
 vec3 csLastScattering(vec2 p, float t, float q) {
     float clear = smoothstep(.02,.95,t);
     vec2 s = csRotate(.28)*p;
@@ -158,6 +175,7 @@ vec3 csLastScattering(vec2 p, float t, float q) {
     float lanes = csNoise(vec2(ray.y*62.+.20*sin(ambient*.16), 8.));
     float shafts = pow(lanes,5.)*exp(-abs(ray.y+.015)*7.)*exp(-abs(ray.x-.23)*1.4);
     col += vec3(.62,.52,.34)*shafts*clear;
+    for(int i=0;i<3;i++) col += vec3(.88,.73,.50)*csPhotonTrail(ray,float(i),clear);
     return 1.-exp(-1.17*col);
 }
 

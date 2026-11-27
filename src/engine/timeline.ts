@@ -24,13 +24,12 @@ export function makeTimeline(entries: readonly {weight: number; id?: string}[]) 
   }
   return { starts, ends, total, at, evaluate }
 }
-export function damp(current: number, target: number, dt: number) {
+export function damp(current: number, target: number, dt: number, speed = .018) {
   const delta = target - current
   const gap = Math.abs(delta)
   if (gap < .000025) return target
   // Large flings pass through each scene at a bounded speed. Near the native
   // scroll position, join an exponential tail with the same initial velocity.
-  const speed = .018
   const rate = 6
   const tail = speed / rate
   const cruiseTime = Math.max(0, (gap - tail) / speed)

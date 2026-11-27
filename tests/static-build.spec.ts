@@ -18,6 +18,7 @@ test('static production build runs under a subdirectory',async({page})=>{
   await page.goto(base+'?diagnostics=1')
   await expect(page.locator('#cosmos')).toHaveAttribute('data-renderer','webgl')
   await page.getByRole('button',{name:'Index',exact:true}).click()
+  await page.getByRole('button',{name:'Chapters'}).click()
   await page.locator('.chapter-link').last().click()
   await expect(page.locator('#stage')).toHaveAttribute('data-scene','earth')
   await expect(page.locator('#diagnostics')).toHaveCount(0)

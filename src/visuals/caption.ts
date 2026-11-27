@@ -116,31 +116,29 @@ export class Caption {
     ctx.globalAlpha = 1
   }
 
-  advance(dt: number, edge: number, travelling: boolean, reduced: boolean) {
+  advance(dt: number, travelling: boolean, reduced: boolean) {
     if (this.container.hidden) return false
     this.age += dt
-    // Finish shedding the line even if the user pauses halfway through a blend.
-    if (!reduced && edge > 0 && this.release < 0 && this.opacity > .12) this.release = edge
     if (reduced) {
       this.release = -1
       this.opacity = 1
     } else if (this.release >= 0) {
       this.release = Math.min(1, this.release + dt / 1.75)
-      if (this.release === 1 && !travelling && edge < .01) {
+      if (this.release === 1 && !travelling) {
         this.release = -1
         this.age = 0
         this.opacity = 0
       }
     } else {
-      this.opacity = ease((this.age - .48) / 1.15)
+      this.opacity = ease((this.age - .26) / .95)
     }
     if (this.opacity !== this.lastOpacity) {
       this.container.style.opacity = String(this.opacity)
       this.lastOpacity = this.opacity
     }
-    const dispersal = reduced ? 0 : clamp(Math.max(edge, this.release))
+    const dispersal = reduced ? 0 : clamp(this.release)
     this.container.inert = this.opacity < .04 || dispersal > .8
     this.scatter(dispersal)
-    return !reduced && (this.opacity < 1 && this.release < 0 || this.release >= 0 && (this.release < 1 || edge < .01))
+    return !reduced && (this.opacity < 1 || this.release >= 0)
   }
 }
